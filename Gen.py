@@ -2,193 +2,222 @@ import streamlit as st
 from transformers import pipeline
 from sentence_transformers import SentenceTransformer, util
 
-# ------------------------------------------
-# 🌈 PAGE CONFIG & STYLING
-# ------------------------------------------
+# ================== PAGE CONFIG ==================
 st.set_page_config(
-    page_title="Interactive NLP App",
-    page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="OGGen AI Transformer Suite",
+    page_icon="✨",
+    layout="wide"
 )
 
-st.markdown(
-    """
-    <style>
-        .title {
-            font-size:40px !important;
-            color:#7b001c;
-            font-weight:900;
-            text-align:center;
-        }
-        .subtitle {
-            font-size:20px !important;
-            color:#3c3c3c;
-            text-align:center;
-            margin-bottom:20px;
-        }
-        .section-title {
-            font-size:26px;
-            color:#7b001c;
-            font-weight:700;
-        }
-        .stTextInput > label, .stTextArea > label {
-            color:#7b001c !important;
-        }
-        .block {
-            padding:20px;
-            border-radius:15px;
-            background:#f6f0e8;
-            margin-bottom:20px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# ================== STYLING ==================
+st.markdown("""
+<style>
+    body { background-color: #f8f3ef; }
+    .title { font-size: 45px; font-weight: 800; color:#5b0011; text-align:center; }
+    .subtitle { font-size: 20px; text-align:center; margin-top:-10px; color:#3b2f2f; }
+    .card {
+        background-color: #fff7f5;
+        padding: 25px;
+        border-radius: 20px;
+        box-shadow: 0px 2px 10px rgba(91,0,17,0.15);
+        margin-bottom: 20px;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-# ------------------------------------------
-# 🎉 HEADER
-# ------------------------------------------
-st.markdown('<div class="title">⚡ Intelligent NLP Playground</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Explore text generation, summarization, sentiment analysis, NER, translation & more — all powered by Transformers!</div>', unsafe_allow_html=True)
-st.write("")
+# ================== TITLE ==================
+st.markdown("<div class='title'>✨ OGGen AI – Interactive NLP Suite ✨</div>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle'>Smarter UI • Theme-Based • Fully Button Interactive</div>", unsafe_allow_html=True)
 
-# -------------------------------------------------
-# 🧠 LOAD YOUR TRANSFORMER MODELS
-# -------------------------------------------------
-generator = pipeline("text-generation", model="gpt2")
-summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
-sentiment_model = pipeline("sentiment-analysis")
-ner_model = pipeline("ner", model="dslim/bert-base-NER", aggregation_strategy="simple")
-qa_pipeline = pipeline("question-answering")
-translate_model = pipeline("translation", model="Helsinki-NLP/opus-mt-en-fr")
-para_model = pipeline("text2text-generation", model="t5-small")
-grammar_corrector = pipeline("text2text-generation", model="prithivida/grammar_error_correcter_v1")
-similarity_model = SentenceTransformer("all-MiniLM-L6-v2")
-
-# -------------------------------------------------
-# 🎨 SIDEBAR MENU
-# -------------------------------------------------
-menu = st.sidebar.radio(
-    "Choose a Task",
+# ================== SIDEBAR NAVIGATION ==================
+menu = st.sidebar.selectbox(
+    "Choose Tool:",
     [
+        "Home",
         "Text Generation",
         "Summarization",
         "Sentiment Analysis",
-        "Named Entity Recognition (NER)",
+        "Named Entity Recognition",
         "Question Answering",
         "Translation",
         "Paraphrasing",
+        "Keyword Extraction",
         "Grammar Correction",
         "Text Similarity"
     ]
 )
 
-# -------------------------------------------------
-# 🧩 TEXT GENERATION
-# -------------------------------------------------
+# ================== LOAD MODELS ==================
+@st.cache_resource
+def load_models():
+    return {
+        "generator": pipeline("text-generation", model="gpt2"),
+        "summarizer": pipeline("summarization", model="facebook/bart-large-cnn"),
+        "sentiment": pipeline("sentiment-analysis"),
+        "ner": pipeline("ner", model="dslim/bert-base-NER", aggregation_strategy="simple"),
+        "qa": pipeline("question-answering"),
+        "translate_en_fr": pipeline("translation", model="Helsinki-NLP/opus-mt-en-fr"),
+        "translate_en_de": pipeline("translation", model="Helsinki-NLP/opus-mt-en-de"),
+        "translate_en_hi": pipeline("translation", model="Helsinki-NLP/opus-mt-en-hi"),
+        "para": pipeline("text2text-generation", model="t5-small"),
+        "grammar": pipeline("text2text-generation", model="prithivida/grammar_error_correcter_v1"),
+        "embed": SentenceTransformer("all-MiniLM-L6-v2")
+    }
+
+models = load_models()
+
+# ========================== HOME ==========================
+if menu == "Home":
+    st.markdown("""
+    <div class='card'>
+        <h3 style='color:#5b0011;'>Welcome to OGGen AI ✨</h3>
+        <p>This is an enhanced, interactive NLP application with buttons for all major operations.
+        Explore text generation, summarization, translation, QA, NER, sentiment analysis and more.  
+        Designed with a maroon–cream aesthetic for a premium feel.</p>
+        <h4 style='color:#5b0011;'>Enjoy your experience!</h4>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+# ========================== TEXT GENERATION ==========================
 if menu == "Text Generation":
-    st.markdown('<div class="section-title">📝 Text Generation</div>', unsafe_allow_html=True)
-    prompt = st.text_input("Enter a starting prompt:", "BJP is")
+    st.markdown("<div class='card'><h3>📝 Text Generation</h3>", unsafe_allow_html=True)
+    prompt = st.text_area("Enter a prompt:", "BJP is")
 
-    if st.button("Generate"):
-        with st.spinner("Generating..."):
-            result = generator(prompt, max_length=400)
-            st.success("Generated Text:")
-            st.write(result[0]["generated_text"])
+    length = 200
+    if st.button("Generate 200 tokens"):
+        length = 200
+    if st.button("Generate 400 tokens"):
+        length = 400
 
-# -------------------------------------------------
-# 🧩 SUMMARIZATION
-# -------------------------------------------------
-elif menu == "Summarization":
-    st.markdown('<div class="section-title">📚 Summarization</div>', unsafe_allow_html=True)
-    text = st.text_area("Enter text to summarize:", """Artificial intelligence is transforming industries worldwide...""")
+    if st.button("Generate Text"):
+        result = models["generator"](prompt, max_length=length)
+        st.success(result[0]["generated_text"])
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    if st.button("Summarize"):
-        with st.spinner("Summarizing..."):
-            summary = summarizer(text, max_length=50, min_length=10, do_sample=False)
-            st.success("Summary:")
-            st.write(summary[0]["summary_text"])
 
-# -------------------------------------------------
-# 🧩 SENTIMENT ANALYSIS
-# -------------------------------------------------
-elif menu == "Sentiment Analysis":
-    st.markdown('<div class="section-title">💬 Sentiment Analysis</div>', unsafe_allow_html=True)
-    text = st.text_input("Enter text:", "I love using machine learning tools—they make life easier!")
+# ========================== SUMMARIZATION ==========================
+if menu == "Summarization":
+    st.markdown("<div class='card'><h3>📚 Summarization</h3>", unsafe_allow_html=True)
+    text = st.text_area("Enter text:")
 
-    if st.button("Analyze"):
-        result = sentiment_model(text)
-        st.write(result)
+    if st.button("Short Summary (30 words)"):
+        summary = models["summarizer"](text, max_length=30, min_length=10, do_sample=False)
+        st.success(summary[0]["summary_text"])
 
-# -------------------------------------------------
-# 🧩 NER
-# -------------------------------------------------
-elif menu == "Named Entity Recognition (NER)":
-    st.markdown('<div class="section-title">🔍 Named Entity Recognition</div>', unsafe_allow_html=True)
-    text = st.text_input("Enter text:", "Elon Musk founded SpaceX in California.")
+    if st.button("Medium Summary (50 words)"):
+        summary = models["summarizer"](text, max_length=50, min_length=20, do_sample=False)
+        st.success(summary[0]["summary_text"])
 
-    if st.button("Identify Entities"):
-        st.write(ner_model(text))
+    if st.button("Long Summary (100 words)"):
+        summary = models["summarizer"](text, max_length=100, min_length=40, do_sample=False)
+        st.success(summary[0]["summary_text"])
 
-# -------------------------------------------------
-# 🧩 QUESTION ANSWERING
-# -------------------------------------------------
-elif menu == "Question Answering":
-    st.markdown('<div class="section-title">❓ Question Answering</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    question = st.text_input("Question:", "Where is Taj Mahal?")
-    context = st.text_area("Context:", "The Taj Mahal is located in Agra, India.")
+
+# ========================== SENTIMENT ==========================
+if menu == "Sentiment Analysis":
+    st.markdown("<div class='card'><h3>😊 Sentiment Analysis</h3>", unsafe_allow_html=True)
+    text = st.text_area("Enter text:")
+
+    if st.button("Analyze Sentiment"):
+        result = models["sentiment"](text)
+        st.success(result)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+# ========================== NER ==========================
+if menu == "Named Entity Recognition":
+    st.markdown("<div class='card'><h3>🏷 NER (Keyword Extraction)</h3>", unsafe_allow_html=True)
+    text = st.text_area("Enter text:")
+
+    if st.button("Extract Entities"):
+        result = models["ner"](text)
+        st.success(result)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+# ========================== QA ==========================
+if menu == "Question Answering":
+    st.markdown("<div class='card'><h3>❓ Question Answering</h3>", unsafe_allow_html=True)
+    question = st.text_input("Enter question:")
+    context = st.text_area("Enter context:")
 
     if st.button("Get Answer"):
-        st.write(qa_pipeline(question=question, context=context))
+        result = models["qa"](question=question, context=context)
+        st.success(result)
 
-# -------------------------------------------------
-# 🧩 TRANSLATION
-# -------------------------------------------------
-elif menu == "Translation":
-    st.markdown('<div class="section-title">🌍 Translation (EN → FR)</div>', unsafe_allow_html=True)
-    text = st.text_input("Enter English text:", "How are you?")
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    if st.button("Translate"):
-        translated = translate_model(text)
-        st.success("French Translation:")
-        st.write(translated[0]["translation_text"])
 
-# -------------------------------------------------
-# 🧩 PARAPHRASING
-# -------------------------------------------------
-elif menu == "Paraphrasing":
-    st.markdown('<div class="section-title">♻️ Paraphrasing</div>', unsafe_allow_html=True)
-    text = st.text_input("Enter text to paraphrase:", "Machine learning is interesting")
+# ========================== TRANSLATION ==========================
+if menu == "Translation":
+    st.markdown("<div class='card'><h3>🌍 Translation</h3>", unsafe_allow_html=True)
+    text = st.text_input("Enter English text:")
 
-    if st.button("Paraphrase"):
-        result = para_model("paraphrase: " + text)
-        st.write(result[0]["generated_text"])
+    col1, col2, col3 = st.columns(3)
 
-# -------------------------------------------------
-# 🧩 GRAMMAR CORRECTION
-# -------------------------------------------------
-elif menu == "Grammar Correction":
-    st.markdown('<div class="section-title">📝 Grammar Correction</div>', unsafe_allow_html=True)
-    text = st.text_input("Enter sentence:", "She go to school every days")
+    with col1:
+        if st.button("English → French"):
+            st.success(models["translate_en_fr"](text)[0]["translation_text"])
 
-    if st.button("Correct"):
-        corrected = grammar_corrector(text)
-        st.write(corrected[0]["generated_text"])
+    with col2:
+        if st.button("English → German"):
+            st.success(models["translate_en_de"](text)[0]["translation_text"])
 
-# -------------------------------------------------
-# 🧩 TEXT SIMILARITY
-# -------------------------------------------------
-elif menu == "Text Similarity":
-    st.markdown('<div class="section-title">🔗 Text Similarity</div>', unsafe_allow_html=True)
-    text1 = st.text_input("Text A:", "AI will change the world")
-    text2 = st.text_input("Text B:", "Artificial intelligence will transform industries")
+    with col3:
+        if st.button("English → Hindi"):
+            st.success(models["translate_en_hi"](text)[0]["translation_text"])
 
-    if st.button("Compare"):
-        a = similarity_model.encode(text1, convert_to_tensor=True)
-        b = similarity_model.encode(text2, convert_to_tensor=True)
-        similarity = util.pytorch_cos_sim(a, b)
-        st.write(similarity)
+    st.markdown("</div>", unsafe_allow_html=True)
 
+
+# ========================== PARAPHRASING ==========================
+if menu == "Paraphrasing":
+    st.markdown("<div class='card'><h3>♻️ Paraphrasing</h3>", unsafe_allow_html=True)
+    text = st.text_input("Enter text:")
+
+    if st.button("Simple Paraphrase"):
+        st.success(models["para"]("paraphrase: " + text)[0]["generated_text"])
+
+    if st.button("More Creative"):
+        st.success(models["para"]("paraphrase it creatively: " + text)[0]["generated_text"])
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+# ========================== GRAMMAR ==========================
+if menu == "Grammar Correction":
+    st.markdown("<div class='card'><h3>✍️ Grammar Correction</h3>", unsafe_allow_html=True)
+    text = st.text_input("Enter incorrect sentence:")
+
+    if st.button("Correct Grammar"):
+        st.success(models["grammar"](text)[0]["generated_text"])
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+# ========================== SIMILARITY ==========================
+if menu == "Text Similarity":
+    st.markdown("<div class='card'><h3>🔗 Text Similarity</h3>", unsafe_allow_html=True)
+
+    s1 = st.text_input("Sentence 1:")
+    s2 = st.text_input("Sentence 2:")
+
+    if st.button("Calculate Similarity"):
+        e1 = models["embed"].encode(s1, convert_to_tensor=True)
+        e2 = models["embed"].encode(s2, convert_to_tensor=True)
+        score = util.pytorch_cos_sim(e1, e2)
+        st.success(score)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+# ========================== FOOTER ==========================
+st.markdown("""
+<br><center><p style='color:#5b0011;font-weight:600;font-size:18px;'>
+✨ Thank you for using OGGen AI! ✨
+</p></center>
+""", unsafe_allow_html=True)
