@@ -3,4 +3,6 @@ transformers
 torch
 pandas
 sentence-transformers
-sentencepiece
+sentencepiece  <-- CRITICAL for T5 models (t5-small, opus-mt-en-fr, etc.)
+accelerate     <-- Highly recommended for transformers stability
+scipy          <-- Required by some transformer models
