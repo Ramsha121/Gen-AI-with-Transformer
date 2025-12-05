@@ -44,7 +44,7 @@ st.markdown(
 
 
 # =====================================================================
-#   MODEL LOADERS (FINAL FIX: Replaced problematic Paraphrasing model with t5-small)
+#   MODEL LOADERS (Using stable models and slow tokenizer for stability)
 # =====================================================================
 
 @st.cache_resource(show_spinner="Loading GPT-2 Generator...")
@@ -69,6 +69,7 @@ def load_qa_model():
 
 @st.cache_resource(show_spinner="Loading Translation Model...")
 def load_translator():
+    # This model is also T5-based, so it requires sentencepiece
     try:
         return pipeline("translation_en_to_fr", model="Helsinki-NLP/opus-mt-en-fr")
     except:
@@ -76,7 +77,7 @@ def load_translator():
 
 @st.cache_resource(show_spinner="Loading Paraphrasing Model...")
 def load_paraphraser():
-    # 🔥 ULTIMATE FIX: Switch to the highly stable base 't5-small' model
+    # Switched to highly stable T5-small
     model_name = "t5-small"
     return pipeline(
         "text2text-generation",
@@ -87,7 +88,7 @@ def load_paraphraser():
 
 @st.cache_resource(show_spinner="Loading Grammar Corrector...")
 def load_grammar_corrector():
-    # Ensuring stability for the other T5-based model
+    # T5-based model, requires sentencepiece
     model_name = "prithivida/grammar_error_correcter_v1"
     return pipeline(
         "text2text-generation",
@@ -133,7 +134,7 @@ def run_translation(text):
 
 def run_paraphrasing(text):
     para = load_paraphraser()
-    # T5 models require a specific prefix, increased max_length for better results
+    # T5 models require a specific prefix
     return para(f"paraphrase: {text}", max_length=150)[0]["generated_text"]
 
 def run_grammar_correction(text):
@@ -232,7 +233,6 @@ with st.spinner("Preparing all AI models..."):
     load_ner_model()
     load_qa_model()
     load_translator()
-    # The corrected functions are called here
     load_paraphraser() 
     load_grammar_corrector()
     load_similarity_model()
