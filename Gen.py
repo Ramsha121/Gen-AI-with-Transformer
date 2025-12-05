@@ -44,7 +44,7 @@ st.markdown(
 
 
 # =====================================================================
-#   MODEL LOADERS (FIXED: Replaced problematic Paraphrasing model)
+#   MODEL LOADERS (FINAL FIX: Replaced problematic Paraphrasing model with t5-small)
 # =====================================================================
 
 @st.cache_resource(show_spinner="Loading GPT-2 Generator...")
@@ -76,19 +76,18 @@ def load_translator():
 
 @st.cache_resource(show_spinner="Loading Paraphrasing Model...")
 def load_paraphraser():
-    # 🔥 CRITICAL FIX: Replaced Vamsi/T5_Paraphrase_Paws with a stable alternative
-    # The previous model caused a persistent ValueError
-    model_name = "tuner007/t5_paraphrase_paws"
+    # 🔥 ULTIMATE FIX: Switch to the highly stable base 't5-small' model
+    model_name = "t5-small"
     return pipeline(
         "text2text-generation",
         model=model_name,
         tokenizer=model_name, 
-        use_fast=False # Still use slow tokenizer for safety
+        use_fast=False
     )
 
 @st.cache_resource(show_spinner="Loading Grammar Corrector...")
 def load_grammar_corrector():
-    # Using the original model but keeping the use_fast=False for T5 stability
+    # Ensuring stability for the other T5-based model
     model_name = "prithivida/grammar_error_correcter_v1"
     return pipeline(
         "text2text-generation",
@@ -103,7 +102,7 @@ def load_similarity_model():
 
 
 # =====================================================================
-#   UTILITY FUNCTIONS (UNCHANGED)
+#   UTILITY FUNCTIONS (Updated run_paraphrasing for T5-small)
 # =====================================================================
 
 def run_text_generation(prompt, max_len):
@@ -134,8 +133,8 @@ def run_translation(text):
 
 def run_paraphrasing(text):
     para = load_paraphraser()
-    # The new T5 model requires the 'paraphrase:' prefix
-    return para(f"paraphrase: {text}")[0]["generated_text"]
+    # T5 models require a specific prefix, increased max_length for better results
+    return para(f"paraphrase: {text}", max_length=150)[0]["generated_text"]
 
 def run_grammar_correction(text):
     gc = load_grammar_corrector()
