@@ -1,4 +1,6 @@
+streamlit
 transformers
-sentence-transformers
 torch
-accelerate
+pandas
+sentence-transformers
+sentencepiece  <-- This is the critical missing dependency for T5 models
