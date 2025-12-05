@@ -90,25 +90,14 @@ def load_qa_model():
 
 @st.cache_resource(show_spinner="Initializing Translation Model (EN-FR)...")
 def load_translator():
-    """Load the English-to-French translation pipeline."""
-    return pipeline("translation", model="Helsinki-NLP/opus-mt-en-fr")
-
-@st.cache_resource(show_spinner="Initializing Paraphrase Model (T5)...")
-def load_paraphraser():
-    """Load the text2text generation pipeline for paraphrasing."""
-    return pipeline("text2text-generation", model="t5-small")
-
-@st.cache_resource(show_spinner="Initializing Grammar Correction Model...")
-def load_grammar_corrector():
-    """Load the grammar correction pipeline."""
-    return pipeline("text2text-generation", model="prithivida/grammar_error_correcter_v1")
-
-@st.cache_resource(show_spinner="Initializing Similarity Encoder (MiniLM)...")
-def load_similarity_model():
-    """Load the Sentence Transformer model for semantic similarity."""
-    # Using 'all-MiniLM-L6-v2' which is highly efficient
-    return SentenceTransformer("all-MiniLM-L6-v2")
-
+    try:
+        return pipeline(
+            "translation_en_to_fr",
+            model="Helsinki-NLP/opus-mt-en-fr"
+        )
+    except:
+        st.warning("Fallback model loaded due to environment limits.")
+        return pipeline("text2text-generation", model="t5-small")
 
 # --- Utility Functions (Logic remains the same as original script) ---
 
