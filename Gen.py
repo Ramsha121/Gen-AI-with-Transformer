@@ -44,7 +44,7 @@ st.markdown(
 
 
 # =====================================================================
-#   MODEL LOADERS (FIXED: Merged the two sections and removed duplicates)
+#   MODEL LOADERS (FIXED: Added use_fast=False for T5 models)
 # =====================================================================
 
 @st.cache_resource(show_spinner="Loading GPT-2 Generator...")
@@ -69,6 +69,7 @@ def load_qa_model():
 
 @st.cache_resource(show_spinner="Loading Translation Model...")
 def load_translator():
+    # This model is stable but we'll stick to the original logic
     try:
         return pipeline("translation_en_to_fr", model="Helsinki-NLP/opus-mt-en-fr")
     except:
@@ -76,23 +77,26 @@ def load_translator():
 
 @st.cache_resource(show_spinner="Loading Paraphrasing Model...")
 def load_paraphraser():
-    # Only one definition, using the model from the first section
+    # FIX APPLIED HERE: use_fast=False to resolve ValueError
     return pipeline(
         "text2text-generation",
-        model="Vamsi/T5_Paraphrase_Paws"
+        model="Vamsi/T5_Paraphrase_Paws",
+        tokenizer="Vamsi/T5_Paraphrase_Paws", 
+        use_fast=False
     )
 
 @st.cache_resource(show_spinner="Loading Grammar Corrector...")
 def load_grammar_corrector():
-    # Only one definition, using the model from the first section
+    # FIX APPLIED HERE: use_fast=False to resolve potential T5 tokenizer issues
     return pipeline(
         "text2text-generation",
-        model="prithivida/grammar_error_correcter_v1"
+        model="prithivida/grammar_error_correcter_v1",
+        tokenizer="prithivida/grammar_error_correcter_v1",
+        use_fast=False
     )
 
 @st.cache_resource(show_spinner="Loading Similarity Model...")
 def load_similarity_model():
-    # Only one definition
     return SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
 
@@ -128,7 +132,7 @@ def run_translation(text):
 
 def run_paraphrasing(text):
     para = load_paraphraser()
-    # T5 models often require a prefix, ensure the correct one is used
+    # T5 model often requires a prefix
     return para(f"paraphrase: {text}")[0]["generated_text"]
 
 def run_grammar_correction(text):
@@ -142,13 +146,18 @@ def run_text_similarity(text_a, text_b):
     return util.pytorch_cos_sim(a, b).item()
 
 # =====================================================================
-#   PLACEHOLDER UI FUNCTIONS (ADDED to prevent NameError)
+#   UI FUNCTIONS (Placeholder functions to prevent NameError)
 #   *** REPLACE THESE WITH YOUR ACTUAL UI CODE ***
 # =====================================================================
 
 def page_text_generation():
     st.title("✍️ Text Generation (Placeholder)")
-    st.info("Replace this with your actual Text Generation UI.")
+    st.info("Replace this with your actual Text Generation UI. Input below to test utility function.")
+    prompt = st.text_area("Prompt", "The quick brown fox jumps over the lazy dog.")
+    if st.button("Generate"):
+        with st.spinner("Generating..."):
+            result = run_text_generation(prompt, 50)
+            st.code(result)
 
 def page_summarization():
     st.title("📝 Text Summarization (Placeholder)")
@@ -172,11 +181,27 @@ def page_translation():
 
 def page_paraphrase_grammar():
     st.title("✨ Text Refinement (Paraphrase/Grammar) (Placeholder)")
-    st.info("Replace this with your actual Text Refinement UI.")
+    st.info("Replace this with your actual Text Refinement UI. Input below to test utility function.")
+    text = st.text_area("Text to Refine", "I am going to fast. My grammar is not good.")
+    col1, col2 = st.columns(2)
+    if col1.button("Paraphrase"):
+        with st.spinner("Paraphrasing..."):
+            result = run_paraphrasing(text)
+            st.code(result)
+    if col2.button("Correct Grammar"):
+        with st.spinner("Correcting..."):
+            result = run_grammar_correction(text)
+            st.code(result)
 
 def page_text_similarity():
     st.title("🔢 Semantic Text Similarity (Placeholder)")
     st.info("Replace this with your actual Text Similarity UI.")
+    text_a = st.text_input("Text A", "The dog is sleeping.")
+    text_b = st.text_input("Text B", "A canine is resting.")
+    if st.button("Calculate Similarity"):
+        with st.spinner("Calculating..."):
+            similarity = run_text_similarity(text_a, text_b)
+            st.metric("Cosine Similarity Score", f"{similarity:.4f}")
 
 
 # =====================================================================
@@ -186,7 +211,6 @@ def page_text_similarity():
 st.sidebar.markdown("# **OGGen AI Hub**")
 st.sidebar.markdown("Explore various NLP tasks powered by Hugging Face Transformers.")
 
-# Define the dictionary using the functions, now including the placeholders
 page_options = {
     "Text Generation": page_text_generation,
     "Text Summarization": page_summarization,
@@ -199,9 +223,8 @@ page_options = {
 }
 
 selection = st.sidebar.radio("Go to:", list(page_options.keys()))
-page_options[selection]() # This line will now execute the placeholder functions
+page_options[selection]()
 
-# Preload all models
 with st.spinner("Preparing all AI models..."):
     load_generator()
     load_summarizer()
@@ -209,7 +232,8 @@ with st.spinner("Preparing all AI models..."):
     load_ner_model()
     load_qa_model()
     load_translator()
-    load_paraphraser()
+    # These two lines are where the fix prevents the ValueError
+    load_paraphraser() 
     load_grammar_corrector()
     load_similarity_model()
     time.sleep(0.5)
