@@ -1,4 +1,4 @@
-import streamlit as st 
+import streamlit as st
 from transformers import pipeline
 from sentence_transformers import SentenceTransformer, util
 import torch
@@ -44,29 +44,7 @@ st.markdown(
 
 
 # =====================================================================
-#   ADDING MISSING MODEL LOADERS (THIS FIXES THE NameError)
-# =====================================================================
-
-@st.cache_resource(show_spinner="Loading Paraphrasing Model...")
-def load_paraphraser():
-    return pipeline(
-        "text2text-generation",
-        model="Vamsi/T5_Paraphrase_Paws"
-    )
-
-@st.cache_resource(show_spinner="Loading Grammar Corrector...")
-def load_grammar_corrector():
-    return pipeline(
-        "text2text-generation",
-        model="prithivida/grammar_error_correcter_v1"
-    )
-
-@st.cache_resource(show_spinner="Loading Similarity Model...")
-def load_similarity_model():
-    return SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-
-# =====================================================================
-#   EXISTING MODEL LOADERS
+#   MODEL LOADERS (FIXED: Merged the two sections and removed duplicates)
 # =====================================================================
 
 @st.cache_resource(show_spinner="Loading GPT-2 Generator...")
@@ -96,17 +74,26 @@ def load_translator():
     except:
         return pipeline("text2text-generation", model="t5-small")
 
-@st.cache_resource(show_spinner="Initializing Paraphrasing Model (T5)...")
+@st.cache_resource(show_spinner="Loading Paraphrasing Model...")
 def load_paraphraser():
-    return pipeline("text2text-generation", model="Vamsi/T5_Paraphrase_Paws")
+    # Only one definition, using the model from the first section
+    return pipeline(
+        "text2text-generation",
+        model="Vamsi/T5_Paraphrase_Paws"
+    )
 
-@st.cache_resource(show_spinner="Initializing Grammar Correction Model (T5)...")
+@st.cache_resource(show_spinner="Loading Grammar Corrector...")
 def load_grammar_corrector():
-    return pipeline("text2text-generation", model="grammarly/coedit-small")
+    # Only one definition, using the model from the first section
+    return pipeline(
+        "text2text-generation",
+        model="prithivida/grammar_error_correcter_v1"
+    )
 
-@st.cache_resource(show_spinner="Initializing Sentence Similarity Model...")
+@st.cache_resource(show_spinner="Loading Similarity Model...")
 def load_similarity_model():
-    return SentenceTransformer("all-MiniLM-L6-v2")
+    # Only one definition
+    return SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
 
 # =====================================================================
@@ -141,6 +128,7 @@ def run_translation(text):
 
 def run_paraphrasing(text):
     para = load_paraphraser()
+    # T5 models often require a prefix, ensure the correct one is used
     return para(f"paraphrase: {text}")[0]["generated_text"]
 
 def run_grammar_correction(text):
@@ -154,12 +142,42 @@ def run_text_similarity(text_a, text_b):
     return util.pytorch_cos_sim(a, b).item()
 
 # =====================================================================
-#   UI FUNCTIONS (unchanged – your layout preserved)
+#   PLACEHOLDER UI FUNCTIONS (ADDED to prevent NameError)
+#   *** REPLACE THESE WITH YOUR ACTUAL UI CODE ***
 # =====================================================================
 
-# (All your UI page functions stay exactly the same)
-# I am not rewriting them to save space.
-# Paste your entire original block of UI pages here without modifying.
+def page_text_generation():
+    st.title("✍️ Text Generation (Placeholder)")
+    st.info("Replace this with your actual Text Generation UI.")
+
+def page_summarization():
+    st.title("📝 Text Summarization (Placeholder)")
+    st.info("Replace this with your actual Text Summarization UI.")
+
+def page_sentiment_analysis():
+    st.title("😊 Sentiment Analysis (Placeholder)")
+    st.info("Replace this with your actual Sentiment Analysis UI.")
+
+def page_ner():
+    st.title("📍 Named Entity Recognition (NER) (Placeholder)")
+    st.info("Replace this with your actual NER UI.")
+
+def page_qa():
+    st.title("❓ Question Answering (QA) (Placeholder)")
+    st.info("Replace this with your actual QA UI.")
+
+def page_translation():
+    st.title("🌐 English to French Translation (Placeholder)")
+    st.info("Replace this with your actual Translation UI.")
+
+def page_paraphrase_grammar():
+    st.title("✨ Text Refinement (Paraphrase/Grammar) (Placeholder)")
+    st.info("Replace this with your actual Text Refinement UI.")
+
+def page_text_similarity():
+    st.title("🔢 Semantic Text Similarity (Placeholder)")
+    st.info("Replace this with your actual Text Similarity UI.")
+
 
 # =====================================================================
 #   NAVIGATION + MODEL PRELOAD
@@ -168,6 +186,7 @@ def run_text_similarity(text_a, text_b):
 st.sidebar.markdown("# **OGGen AI Hub**")
 st.sidebar.markdown("Explore various NLP tasks powered by Hugging Face Transformers.")
 
+# Define the dictionary using the functions, now including the placeholders
 page_options = {
     "Text Generation": page_text_generation,
     "Text Summarization": page_summarization,
@@ -180,8 +199,9 @@ page_options = {
 }
 
 selection = st.sidebar.radio("Go to:", list(page_options.keys()))
-page_options[selection]()
+page_options[selection]() # This line will now execute the placeholder functions
 
+# Preload all models
 with st.spinner("Preparing all AI models..."):
     load_generator()
     load_summarizer()
