@@ -96,6 +96,19 @@ def load_translator():
     except:
         return pipeline("text2text-generation", model="t5-small")
 
+@st.cache_resource(show_spinner="Initializing Paraphrasing Model (T5)...")
+def load_paraphraser():
+    return pipeline("text2text-generation", model="Vamsi/T5_Paraphrase_Paws")
+
+@st.cache_resource(show_spinner="Initializing Grammar Correction Model (T5)...")
+def load_grammar_corrector():
+    return pipeline("text2text-generation", model="grammarly/coedit-small")
+
+@st.cache_resource(show_spinner="Initializing Sentence Similarity Model...")
+def load_similarity_model():
+    return SentenceTransformer("all-MiniLM-L6-v2")
+
+
 # =====================================================================
 #   UTILITY FUNCTIONS (UNCHANGED)
 # =====================================================================
