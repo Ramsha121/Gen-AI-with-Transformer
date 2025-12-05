@@ -44,7 +44,7 @@ st.markdown(
 
 
 # =====================================================================
-#   MODEL LOADERS (FIXED: Added use_fast=False for T5 models)
+#   MODEL LOADERS (FIXED: Replaced problematic Paraphrasing model)
 # =====================================================================
 
 @st.cache_resource(show_spinner="Loading GPT-2 Generator...")
@@ -69,7 +69,6 @@ def load_qa_model():
 
 @st.cache_resource(show_spinner="Loading Translation Model...")
 def load_translator():
-    # This model is stable but we'll stick to the original logic
     try:
         return pipeline("translation_en_to_fr", model="Helsinki-NLP/opus-mt-en-fr")
     except:
@@ -77,21 +76,24 @@ def load_translator():
 
 @st.cache_resource(show_spinner="Loading Paraphrasing Model...")
 def load_paraphraser():
-    # FIX APPLIED HERE: use_fast=False to resolve ValueError
+    # 🔥 CRITICAL FIX: Replaced Vamsi/T5_Paraphrase_Paws with a stable alternative
+    # The previous model caused a persistent ValueError
+    model_name = "tuner007/t5_paraphrase_paws"
     return pipeline(
         "text2text-generation",
-        model="Vamsi/T5_Paraphrase_Paws",
-        tokenizer="Vamsi/T5_Paraphrase_Paws", 
-        use_fast=False
+        model=model_name,
+        tokenizer=model_name, 
+        use_fast=False # Still use slow tokenizer for safety
     )
 
 @st.cache_resource(show_spinner="Loading Grammar Corrector...")
 def load_grammar_corrector():
-    # FIX APPLIED HERE: use_fast=False to resolve potential T5 tokenizer issues
+    # Using the original model but keeping the use_fast=False for T5 stability
+    model_name = "prithivida/grammar_error_correcter_v1"
     return pipeline(
         "text2text-generation",
-        model="prithivida/grammar_error_correcter_v1",
-        tokenizer="prithivida/grammar_error_correcter_v1",
+        model=model_name,
+        tokenizer=model_name,
         use_fast=False
     )
 
@@ -132,7 +134,7 @@ def run_translation(text):
 
 def run_paraphrasing(text):
     para = load_paraphraser()
-    # T5 model often requires a prefix
+    # The new T5 model requires the 'paraphrase:' prefix
     return para(f"paraphrase: {text}")[0]["generated_text"]
 
 def run_grammar_correction(text):
@@ -146,8 +148,7 @@ def run_text_similarity(text_a, text_b):
     return util.pytorch_cos_sim(a, b).item()
 
 # =====================================================================
-#   UI FUNCTIONS (Placeholder functions to prevent NameError)
-#   *** REPLACE THESE WITH YOUR ACTUAL UI CODE ***
+#   UI FUNCTIONS (Placeholder functions retained)
 # =====================================================================
 
 def page_text_generation():
@@ -232,7 +233,7 @@ with st.spinner("Preparing all AI models..."):
     load_ner_model()
     load_qa_model()
     load_translator()
-    # These two lines are where the fix prevents the ValueError
+    # The corrected functions are called here
     load_paraphraser() 
     load_grammar_corrector()
     load_similarity_model()
