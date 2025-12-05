@@ -68,63 +68,33 @@ def load_similarity_model():
 # =====================================================================
 #   EXISTING MODEL LOADERS
 # =====================================================================
-import streamlit as st
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 
-# -------------------------------------------------------------
-#  PARAPHRASER LOADER  (SAFE FOR STREAMLIT CLOUD)
-# -------------------------------------------------------------
-@st.cache_resource
-def load_paraphraser():
-    model_name = "ramsrigouthamg/t5_paraphraser"  # SAFE MODEL (no sentencepiece issues)
+@st.cache_resource(show_spinner="Loading GPT-2 Generator...")
+def load_generator():
+    return pipeline("text-generation", model="gpt2")
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+@st.cache_resource(show_spinner="Loading Summarizer...")
+def load_summarizer():
+    return pipeline("summarization", model="facebook/bart-large-cnn")
 
-    paraphrase_pipeline = pipeline(
-        "text2text-generation",
-        model=model,
-        tokenizer=tokenizer,
-        max_length=256,
-        do_sample=True,
-        top_k=50,
-        top_p=0.95
-    )
+@st.cache_resource(show_spinner="Loading Sentiment Model...")
+def load_sentiment_model():
+    return pipeline("sentiment-analysis")
 
-    return paraphrase_pipeline
+@st.cache_resource(show_spinner="Loading NER Model...")
+def load_ner_model():
+    return pipeline("ner", model="dslim/bert-base-NER", aggregation_strategy="simple")
 
+@st.cache_resource(show_spinner="Loading QA Model...")
+def load_qa_model():
+    return pipeline("question-answering")
 
-# -------------------------------------------------------------
-#  PARAPHRASER PAGE (CALL THIS IN YOUR MAIN PAGES DICT)
-# -------------------------------------------------------------
-def page_paraphraser():
-    st.title("📝 Paraphrasing Tool")
-
-    st.write("Enter any sentence or paragraph below and I will transform it into a fresh, reworded version while keeping the meaning intact.")
-
-    text = st.text_area("Enter text to paraphrase:")
-
-    if st.button("Paraphrase"):
-        if text.strip() == "":
-            st.warning("Please enter some text.")
-        else:
-            paraphraser = load_paraphraser()
-            output = paraphraser(text)[0]['generated_text']
-            st.success(output)
-            
-
-# -------------------------------------------------------------
-#  EXAMPLE OF ADDING IT TO YOUR MAIN APP
-# -------------------------------------------------------------
-# pages = {
-#     "Text Generation": page_text_generation,
-#     "Paraphrasing": page_paraphraser,
-#     "Summarization": page_summarization,
-# }
-#
-# selected = st.sidebar.selectbox("Choose a task", pages.keys())
-# pages[selected]()
-
+@st.cache_resource(show_spinner="Loading Translation Model...")
+def load_translator():
+    try:
+        return pipeline("translation_en_to_fr", model="Helsinki-NLP/opus-mt-en-fr")
+    except:
+        return pipeline("text2text-generation", model="t5-small")
 
 # =====================================================================
 #   UTILITY FUNCTIONS (UNCHANGED)
@@ -212,4 +182,3 @@ with st.spinner("Preparing all AI models..."):
     time.sleep(0.5)
 
 st.toast("All AI Models are ready!", icon='✅')
-
